@@ -271,6 +271,11 @@ public class Action extends BaseClass implements ActionInterface {
     }
 
     @Override
+    public boolean switchToFrameByIndex(WebDriver driver, int index) {
+        return false;
+    }
+
+    /** @Override
     public boolean switchToFrameByIndex(WebDriver driver,int index) {
         boolean flag = false;
         try {
@@ -709,8 +714,8 @@ public class Action extends BaseClass implements ActionInterface {
     }
     @Override
     public void explicitWait(WebDriver driver, WebElement element, int timeOut ) {
-        WebDriverWait wait = new WebDriverWait(driver,timeOut);
-        wait.until(ExpectedConditions.visibilityOf(element));
+       // WebDriverWait wait = new WebDriverWait(driver,timeOut);
+      //  wait.until(ExpectedConditions.visibilityOf(element));
     }
     @Override
     public void pageLoadTimeOut(WebDriver driver, int timeOut) {
