@@ -11,8 +11,7 @@ import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class FileTransformation {
 
@@ -393,7 +392,7 @@ public class FileTransformation {
         fileInputStream.close();
 
         // Sauvegarder les modifications dans le fichier
-        FileOutputStream fileOutputStream = new FileOutputStream(filePath);
+        FileOutputStream fileOutputStream = new FileOutputStream(System.getProperty("user.dir") + "\\src\\test\\resources\\TestData\\originalFinal.xlsx");
         workbook.write(fileOutputStream);
         fileOutputStream.close();
         workbook.close();
@@ -455,9 +454,64 @@ public class FileTransformation {
                         }
                     }
                 }
-                //System.out.println("aaaaaaaaaaaaaa  "+row.getCell(lastCellNum-1).getStringCellValue());
-                //cell.setCellValue(Math.abs(Double.parseDouble(row.getCell(lastCellNum-1).getStringCellValue())-
-                      //  row.getCell(1).getNumericCellValue())); // Remplissez la cellule avec une valeur par défaut
+                cell.setCellStyle(style); // Appliquer le style aux nouvelles cellules
+                sheet.setColumnWidth(lastCellNum, 5000); // Définir la largeur de la nouvelle colonne
+            }
+
+        }
+
+        fileInputStream.close();
+
+        // Sauvegarder les modifications dans le fichier
+        FileOutputStream fileOutputStream = new FileOutputStream(filePath);
+        workbook.write(fileOutputStream);
+        fileOutputStream.close();
+        workbook.close();
+    }
+
+    public static void addColumn2(String filePath,String mot) throws IOException {
+        FileInputStream fileInputStream = new FileInputStream(filePath);
+        XSSFWorkbook workbook = (XSSFWorkbook) WorkbookFactory.create(fileInputStream);
+
+        XSSFSheet sheet = workbook.getSheetAt(0); // Obtenez la première (et unique) feuille
+
+        // Trouver le nombre de colonnes existantes
+        int lastCellNum = sheet.getRow(2).getLastCellNum();
+
+        // Créer un style pour les nouvelles cellules
+        XSSFCellStyle style = workbook.createCellStyle();
+        style.setFillForegroundColor(IndexedColors.PALE_BLUE.getIndex());
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+
+        XSSFCellStyle style1 = workbook.createCellStyle();
+        XSSFFont font = workbook.createFont();
+        font.setBold(true); // Définir la police en gras
+
+        for (int i = 0; i <= 25; i++) {
+            Row row = sheet.getRow(i);
+            if (row == null) {
+                row = sheet.createRow(i); // Créez une nouvelle ligne si nécessaire
+            }
+            Cell cell = row.createCell(lastCellNum); // Créez une nouvelle cellule dans la nouvelle colonne
+            if(i==0){
+                cell.setCellValue("Temps de réponse");
+                style1.setFont(font);
+                cell.setCellStyle(style1);
+                sheet.setColumnWidth(lastCellNum, 5000);
+            }
+            else if(i==1){
+                cell.setCellValue("");
+                sheet.setColumnWidth(lastCellNum, 5000);
+
+            }
+            else{
+
+                if(i==21){
+                    continue;
+                }
+                else{
+                    cell.setCellValue(mot);
+                }
                 cell.setCellStyle(style); // Appliquer le style aux nouvelles cellules
                 sheet.setColumnWidth(lastCellNum, 5000); // Définir la largeur de la nouvelle colonne
             }
@@ -475,29 +529,97 @@ public class FileTransformation {
 
 
 
+    public static List<Map<String, List<Measure>>> getRegressionData(String filePath) throws IOException {
+        double id = 0;
+        double value = 0;
+        double margin = 0;
+        String responseTime;
+        List<Map<String, List<Measure>>> dataByVersions = new ArrayList<>();
+        FileInputStream file = new FileInputStream(filePath);
+        Workbook workbook = new XSSFWorkbook(file);
+        Sheet sheet = workbook.getSheetAt(0); // Première feuille
 
+        // Utiliser une map pour suivre les IDs et leurs mesures
+        Map<Double, List<Measure>> allMeasures = new HashMap<>();
 
+        for (int col = 3; col < sheet.getRow(0).getPhysicalNumberOfCells(); col += 4) {
+            Row row1 = sheet.getRow(1);
+            Cell idCell = row1.getCell(col - 1);
 
+            // Afficher l'ID de la colonne actuelle
+            if (idCell != null && idCell.getCellType() == CellType.NUMERIC) {
+                id = idCell.getNumericCellValue();
+                System.out.println("ID de la colonne " + (col - 1) + " : " + id);
+            }
 
+            for (int rowIdx = 2; rowIdx < sheet.getPhysicalNumberOfRows(); rowIdx++) {
+                Row row = sheet.getRow(rowIdx);
+                if (row == null) continue;
 
+                Cell valueCell = row.getCell(col);
+                Cell marginCell = row.getCell(col + 1);
+                Cell responseTimeCell = row.getCell(col + 2);
 
+                if (idCell != null && valueCell != null && marginCell != null && responseTimeCell != null) {
+                    try {
+                        if (valueCell.getCellType() == CellType.NUMERIC) {
+                            value = valueCell.getNumericCellValue();
+                        } else if (valueCell.getCellType() == CellType.STRING) {
+                            String valueStr = valueCell.getStringCellValue();
+                            if (valueStr.matches("-?\\d+(\\.\\d+)?")) {
+                                value = Double.parseDouble(valueStr);
+                            } else {
+                                continue; // Skip non-numeric value
+                            }
+                        }
 
+                        if (marginCell.getCellType() == CellType.NUMERIC) {
+                            margin = marginCell.getNumericCellValue();
+                        } else {
+                            continue; // Skip non-numeric margin
+                        }
 
+                        if (responseTimeCell.getCellType() == CellType.STRING) {
+                            responseTime = responseTimeCell.getStringCellValue();
+                        } else {
+                            continue; // Skip non-string response time
+                        }
 
+                        if (value != 0 && margin != 0 && responseTime != null) {
+                            Measure measure = new Measure(value, margin, responseTime);
+                            allMeasures.putIfAbsent(id, new ArrayList<>());
+                            allMeasures.get(id).add(measure);
+                        }
+                    } catch (NumberFormatException e) {
+                        // Skip malformed numeric values
+                        continue;
+                    }
+                }
+            }
+        }
 
+        // Convertir allMeasures en dataByVersions
+        for (Map.Entry<Double, List<Measure>> entry : allMeasures.entrySet()) {
+            Map<String, List<Measure>> dataById = new HashMap<>();
+            dataById.put(String.valueOf(entry.getKey()), entry.getValue());
+            dataByVersions.add(dataById);
+        }
 
+        workbook.close();
+        return dataByVersions;
+    }
 
+    public static class Measure {
+        public double value;
+        public double margin;
+        public String responseTime;
 
-
-
-
-
-
-
-
-
-
-
+        public Measure(double value, double margin, String responseTime) {
+            this.value = value;
+            this.margin = margin;
+            this.responseTime = responseTime;
+        }
+    }
 
 
 

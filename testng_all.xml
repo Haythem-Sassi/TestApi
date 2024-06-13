@@ -9,6 +9,7 @@
         <parameter name="browser" value="Chrome"></parameter>
         <classes>
             <class name="testcases.MainPageTest" />
+            <class name="testcases.RegressionTest" />
 
         </classes>
     </test> <!-- Test -->

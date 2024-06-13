@@ -123,13 +123,13 @@ public class Action extends BaseClass implements ActionInterface {
             // logger.info("Entered text :"+text);
             flag = true;
         } catch (Exception e) {
-            System.out.println("Location Not found");
+           // System.out.println("Location Not found");
             flag = false;
         } finally {
             if (flag) {
-                System.out.println("Successfully entered value");
+               // System.out.println("Successfully entered value");
             } else {
-                System.out.println("Unable to enter value");
+               // System.out.println("Unable to enter value");
             }
 
         }

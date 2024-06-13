@@ -2,6 +2,7 @@ package org.example.pageobjects;
 
 import com.opencsv.CSVReader;
 import com.opencsv.exceptions.CsvValidationException;
+import junit.framework.Assert;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.example.actiondriver.Action;
 import org.example.base.BaseClass;
@@ -22,6 +23,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.Duration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.openqa.selenium.support.ui.ExpectedConditions.visibilityOfElementLocated;
@@ -33,6 +35,8 @@ public class MainPage extends BaseClass{
     private static int counter1 = 0;
 
     private static int counter2 = 0;
+
+    String duree;
 
     // Chemin du dossier de téléchargement
     String downloadFolderPath = "C:\\Users\\DELL G15\\Downloads";
@@ -73,6 +77,9 @@ public class MainPage extends BaseClass{
 
     @FindBy(xpath  = "/html/body/div[3]/div/p")
     private WebElement version;
+
+    @FindBy(xpath  = "/html/body/div[3]/div/div[2]/div[2]/h3")
+    private WebElement duration;
 
     public MainPage() {
         PageFactory.initElements(getDriver(), this);
@@ -180,7 +187,7 @@ public class MainPage extends BaseClass{
         //Thread.sleep(20000);
         closePopup();
         downloadResult();
-
+        duree=getDuration();
         Thread.sleep(3000);
 
 
@@ -252,8 +259,24 @@ public class MainPage extends BaseClass{
 
         FileTransformation.addColumn(System.getProperty("user.dir") + "\\src\\test\\resources\\TestData\\original.xlsx");
 
+        FileTransformation.addColumn2(System.getProperty("user.dir") + "\\src\\test\\resources\\TestData\\original.xlsx",duree);
+
+
+
 
     }
+
+
+    public String getDuration(){
+
+        String str = duration.getText();
+        return(str.substring(str.length() - 6).replace(" ", ""));
+    }
+
+
+
+
+
 
 
 
